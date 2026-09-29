@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Plugin Configuration",
+    "description": "Configuration entry points and live status for the self-made plugins; each plugin contributes its own panel."
+  }
+}

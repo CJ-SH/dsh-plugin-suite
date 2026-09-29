@@ -1,0 +1,18 @@
+# dsh-plugin-suite bundle patch: one new loader row.
+#
+# This package owns no capability of its own — it is the management surface for the other
+# self-made plugins in this workspace. The row carries no config: everything it shows is read
+# from the other rows, and everything it lets you edit is written through the harness's own
+# configuration service, so the values keep belonging to the plugin that declares them.
+#
+# No shipped row is touched, and `connection`'s `inject` is not widened: the host half
+# registers its own read-only route on `webServer` and asks `connection` for the trust fence
+# per request, exactly like the sibling plugins.
+#
+# The page is registered as `settings.section` (one Settings navList entry) and it declares one
+# child list slot, `plugin-suite.panel`, that the sibling plugins push their configuration
+# panels into. Because the plugins detect that slot rather than this package, adding a plugin
+# needs no change here.
+- insert:
+    - id: plugin-suite
+      name: 'dsh-plugin-suite'

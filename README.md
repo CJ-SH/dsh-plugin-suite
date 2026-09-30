@@ -1,87 +1,55 @@
 # dsh-plugin-suite
 
-One Settings page that gathers the **configuration panels** of this workspace's self-made plugins.
+English | [中文](README.zh.md)
 
-Nothing else. The page owns no capability of its own, and — deliberately — performs **no request of
-its own**, so it has no failure path: whatever the plugins contribute is what it renders.
+dsh-plugin-suite provides one entry point in Settings that gathers the **configuration panels** of this workspace's self-made plugins in one place.
 
-## Why it exists
+## Features
 
-dsh 0.2 changed where a plugin's configuration lives, and every failure in that migration was
-silent: a row whose `apply()` throws is only a boot-log warning, a renamed seat simply never
-renders, and a preset that stopped being discovered stays on disk looking correct. `npm test` stayed
-green through all of it.
-
-This package is the "one place" half of the answer. The other half — noticing when something is
-*not* there — is the boot log's job, and the spec in `.trellis/spec/guides/dsh-0.2-plugin-contract.md`
-records what to check after every dsh upgrade.
-
-## How plugins join
-
-The page registers one Settings navList entry (`settings.section`, id `my-plugins`) and declares one
-child list slot:
-
-```js
-children: { 'plugin-suite.panel': { kind: 'list', scope: 'root' } }
-```
-
-A plugin detects that slot and hands its panel over:
-
-```js
-// Standing on its own by default…
-ctx.slots.inject('settings.section', () => {
-  mountOwnPage()
-  // …and standing down for as long as a hub is installed.
-  ctx.slots.inject('plugin-suite.panel', () => {
-    dropOwnPage()
-    const cell = ctx.slots.register({ name: 'plugin-suite.panel', id, order, label, locale }, Panel)
-    return () => { cell(); mountOwnPage() }
-  })
-})
-```
-
-Both registrations sit inside `slots.inject` for the same reason: registering into an **undeclared**
-slot throws (`slot "<id>" is not declared`), and that takes the whole browser half down — which the
-UI reports only as `did not activate`. The hub watch is nested inside the section watch because
-"stand down for the hub" is only a meaningful choice once the page has a seat to stand in.
-
-**This package knows no plugin by name.** Panels arrive from the plugins, so adding one changes
-nothing here.
-
-## What was cut
-
-An earlier revision also carried a status board — provider availability and declared presets, fed by
-the host half's `GET /plugin-suite/status`. That route still exists, is read-only, is fenced like the
-sibling plugins' routes, and was verified returning correct data:
-
-```json
-{ "search": [{ "id": "searxng", "available": true }],
-  "fetch":  [{ "id": "jina", "available": true }, { "id": "http", "available": true }] }
-```
-
-The board was removed anyway: it was this page's only failure path, and a management surface that
-renders "unavailable" — or worse, a *misleading* "service unavailable" — on a healthy workspace costs
-more than the information is worth. Hang it back on the route when there is a reason to.
+- Adds a "Plugin Configuration" entry to the Settings sidebar, with every plugin's configuration panel gathered on that one page.
+- Panels are contributed by the plugins themselves: this package knows no plugin by name, so adding a plugin requires no change here.
+- The page issues no requests of its own, so it has no failure path: whatever the plugins contribute is what it renders.
+- Each plugin's configuration is still owned by its own plugin row; this page only supplies the entry point.
+- After dsh 0.2, broken configuration fails silently; this page gives you the one place to look.
 
 ## Install
 
-Already selected in the `web` profile. `dsh: plugin tree failed to load` on the row means the range
-in `peerDependencies` does not match the running dsh — that gate is intentional.
+### Install from GitHub (recommended)
 
-Do **not** install these bundles with `dsh plugin --profile web add`: verify the profile's
-`dsh.profile.bundles` afterwards, because that path has been observed leaving the selection in a
-state the next boot reports as `did not activate`. The plugin manager (GUI, or `install_bundle`)
-returns `application` and `warnings` for the operation itself — read those.
+```bash
+dsh plugin --profile web add github:CJ-SH/dsh-plugin-suite
+```
+### Install from a local directory
 
-## Verify
-
-```sh
-npm test
+```bash
+dsh plugin --profile web add ./dsh-plugin-suite
 ```
 
-`test/host.test.mjs` drives the status readers against hostile inputs (an absent seam, a non-`Map`
-registry, a provider whose `available()` throws) and the route through its real contract: fence, then
-method, then answer. `test/client.test.mjs` loads the bundle through a stubbed module loader and runs
-`apply` against a slot registry that models the real declaration lifetime — a stub that invokes the
-inject callback unconditionally is what hides a renamed seat, so this file does not use one, and it
-asserts that `apply` contributes **nothing** when no seat is declared.
+This package is already selected in the `web` profile; after installing it elsewhere, double-check the profile's `dsh.profile.bundles`.
+
+## Usage
+
+Open **Settings → Plugin Configuration**: the page shows a "Configuration" heading with the panels contributed by each plugin laid out beneath it; when no plugin has handed a panel over, the page says so plainly — "No plugin has handed a configuration panel to this page yet." — instead of leaving the space blank.
+
+When a plugin does not have this hub installed, it appears on its own Settings page; once the hub is installed, the plugin hands its panel over here and stands down its separate page, while the configuration values are still read and written in that plugin's own configuration rows.
+
+## Uninstall
+
+```bash
+dsh plugin --profile web remove dsh-plugin-suite
+```
+
+## Technical notes
+
+- Requires dsh `^0.2.0-rc.1` (`peerDependencies`) and Node `^22.19.0 || >=24.0.0`.
+- UI copy switches between Chinese and English with dsh's language (locale namespace `my-plugins`).
+- The page shows no status board; the read-only status route `GET /plugin-suite/status` still exists for other plugins to read.
+- Uninstalling restores each plugin's independent Settings page; this hub stores no configuration.
+
+## Further reading
+
+Contracts, troubleshooting, and internals: see [docs/design-notes.md](docs/design-notes.md).
+
+## License
+
+MIT

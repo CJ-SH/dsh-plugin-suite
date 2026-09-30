@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-suite",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "One Settings page that gathers this workspace's self-made plugins: their configuration panels and a read-only status board.",
   "type": "module",
   "main": "lib/index.js",
